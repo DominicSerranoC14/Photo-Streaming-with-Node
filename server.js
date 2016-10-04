@@ -3,7 +3,7 @@
 const express = require('express');
 const app = express();
 const { createReadStream, createWriteStream, readFile } = require('fs');
-const readStream = createReadStream('yoshi.jpg');
+// const readStream = createReadStream('yoshi.jpg');
 const bodyparser = require('body-parser');
 const multer = require('multer');
 /////////////////////////////////////////
@@ -13,16 +13,21 @@ const upload = multer({
 });
 
 app.use(express.static(__dirname + '/partials/'));
-// app.use(bodyparser.urlencoded({extended: false}));
-
-
-const img64 = new Buffer('yoshi.jpg', 'base64');
-const imgASCII = new Buffer(img64, 'ascii');
 
 
 app.post('/uploads', upload.single('image'), (req, res) => {
-  console.log(req.file);
-  res.send(`<img src="./uploads/${req.file.filename}"/ >`)
+  let img64 = "";
+
+  createReadStream(`./partials/uploads/${req.file.filename}`, { encoding: 'base64'})
+  .on('data', (buffer) => {
+    img64 += buffer;
+  })
+  .on('end', () => {
+    console.log("Test end");
+
+    res.send(`<img src="data:image/jpg;base64,${img64}" />`)
+  })
+
 });
 
 
