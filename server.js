@@ -3,14 +3,27 @@
 const express = require('express');
 const app = express();
 const { createReadStream, createWriteStream, readFile } = require('fs');
-const readStream = createReadStream('yoshi.png');
+const readStream = createReadStream('yoshi.jpg');
 const bodyparser = require('body-parser');
+const multer = require('multer');
 /////////////////////////////////////////
 
-app.use(express.static(__dirname + '/partials/'));
+const upload = multer({
+  dest: __dirname + '/partials/uploads/',
+});
 
-const img64 = new Buffer('yoshi.png', 'base64');
-const imgUTF = new Buffer(img64, 'utf-8');
+app.use(express.static(__dirname + '/partials/'));
+// app.use(bodyparser.urlencoded({extended: false}));
+
+
+const img64 = new Buffer('yoshi.jpg', 'base64');
+const imgASCII = new Buffer(img64, 'ascii');
+
+
+app.post('/uploads', upload.single('image'), (req, res) => {
+  console.log(req.file);
+  res.send(`<img src="./uploads/${req.file.filename}"/ >`)
+});
 
 
 //Upload side: transform each jpg img into a 64 bit string and save to db
