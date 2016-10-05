@@ -1,8 +1,25 @@
 body {
+  text-align: center;
+  font-size: 25px;
   color: tomato;
+}
+
+p {
+  text-align: center;
+}
+
+form {
+  border: 1px black solid;
+  width: 30%;
+  margin: auto;
+}
+
+input {
+  margin: 1rem;
 }
 
 .thumbnail {
   width: 150px;
   height: 150px;
+  margin: 2rem;
 }

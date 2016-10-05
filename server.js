@@ -17,12 +17,25 @@ const upload = multer({
 });
 
 
+//Load all images in the db into an array
+const loadEntireImageList = () => {
+  UploadImg
+  .find()
+  .then((collection) => {
+    imageArray = collection;
+  });
+};
+loadEntireImageList();
+
+
 //Middle wares
 app.use(express.static('partials'));
 app.set('view engine', 'pug');
 app.use(bodyparser.urlencoded({extended: false}));
 
-app.get('/', (req, res) => res.render('index'));
+//Routes
+//Routes for index
+app.get('/', (req, res) => res.render('index', { imageArray }));
 
 //Post uploaded img to this route
 app.post('/uploads', upload.single('image'), (req, res) => {
@@ -35,18 +48,18 @@ app.post('/uploads', upload.single('image'), (req, res) => {
     img64 += buffer;
   })
   .on('end', () => {
-    console.log("Test end");
 
     //Save uploaded img to database
     UploadImg
     .create({ base64: img64, time: new Date() })
     .then(() => {
       console.log("Img has been saved to db");
+      console.log("End of Stream");
     })
     .catch(console.error);
 
     //Push the uploaded img to the imageArray
-    imageArray.push(img64);
+    imageArray.push({base64: img64});
     //Send the imageArray to index.pug
     res.render('index', { imageArray });
 
@@ -54,29 +67,12 @@ app.post('/uploads', upload.single('image'), (req, res) => {
     readdirSync('./partials/uploads').forEach((each) => {
       unlinkSync(`./partials/uploads/${each}`);
     });
-
   });
 
 });
 
 
-//Upload side: transform each jpg img into a 64 bit string and save to db
-
-//Download: transform each 64bit into a buffer obj
-
-/////////////////////////////////////////
-// app.get('/img', (req, res) => {
-//   readStream.on('data', (buffer) => {})
-//   .pipe(createWriteStream('/img-of-yoshi.jpg'))
-//
-//   readStream.on('end', () =>  {
-//     res.send('Hello');
-//     console.log("End")
-//   })
-//
-// });
-/////////////////////////////////////////
-
+//Establish db connection
 mongoose.connect(MONGODB_URL, () => {
   app.listen(3000, () => console.log("Listening on port 3000"));
 });
