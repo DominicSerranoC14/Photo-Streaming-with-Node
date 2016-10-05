@@ -4,14 +4,13 @@ const express = require('express');
 const app = express();
 const { createReadStream, createWriteStream, rmdirSync, readdirSync, unlinkSync } = require('fs');
 const multer = require('multer');
-const { json } = require('body-parser');
+const bodyparser = require('body-parser');
 const UploadImg = require('./models/Upload.js');
 const mongoose = require('mongoose');
 mongoose.Promise = Promise;
 const MONGODB_URL = process.env.MONGODB_URL || 'mongodb://localhost:27017/imguploader';
 /////////////////////////////////////////
-//Store the current uploads dir
-const uploadsDir = readdirSync('./partials/uploads');
+let imageArray = [];
 //Destination to upload file
 const upload = multer({
   dest: __dirname + '/partials/uploads/',
@@ -19,8 +18,11 @@ const upload = multer({
 
 
 //Middle wares
-app.use(express.static(__dirname + '/partials/'));
-app.use(json());
+app.use(express.static('partials'));
+app.set('view engine', 'pug');
+app.use(bodyparser.urlencoded({extended: false}));
+
+app.get('/', (req, res) => res.render('index'));
 
 //Post uploaded img to this route
 app.post('/uploads', upload.single('image'), (req, res) => {
@@ -35,7 +37,7 @@ app.post('/uploads', upload.single('image'), (req, res) => {
   .on('end', () => {
     console.log("Test end");
 
-    //Save uploaded to database
+    //Save uploaded img to database
     UploadImg
     .create({ base64: img64, time: new Date() })
     .then(() => {
@@ -43,16 +45,17 @@ app.post('/uploads', upload.single('image'), (req, res) => {
     })
     .catch(console.error);
 
-    res.send(`<img src="data:image/jpg;base64,${img64}" />`);
+    //Push the uploaded img to the imageArray
+    imageArray.push(img64);
+    //Send the imageArray to index.pug
+    res.render('index', { imageArray });
 
-    if (uploadsDir.length === 1) {
-      uploadsDir.forEach((each) => {
-        unlinkSync(`./partials/uploads/${each}`);
-      });
-    };
+    //If the uploadsDir contains any files, then loop through the dir and unlink each file
+    readdirSync('./partials/uploads').forEach((each) => {
+      unlinkSync(`./partials/uploads/${each}`);
+    });
 
   });
-
 
 });
 
